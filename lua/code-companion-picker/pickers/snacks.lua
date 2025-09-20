@@ -10,7 +10,7 @@ function M.show_picker(prompts_info, selection_handler)
 
 	local prompts_util = require("code-companion-picker.utils.prompts")
 
-	-- Debug: Check if we have prompts
+	-- Check if we have prompts
 	if #prompts_info == 0 then
 		vim.notify("code-companion-picker: No prompts available", vim.log.levels.WARN)
 		return false
@@ -21,20 +21,10 @@ function M.show_picker(prompts_info, selection_handler)
 	for i, prompt_info in ipairs(prompts_info) do
 		local display_text = prompts_util.create_display_text(prompt_info)
 
-		-- Generate preview content safely
-		local preview_content = "Loading preview..."
-		local ok, result = pcall(function()
-			local markdown_converter = require("code-companion-picker.utils.markdown_converter")
-			return markdown_converter.codecompanion_to_markdown(prompt_info.prompt_data, prompt_info.name)
-		end)
-		
-		if ok and type(result) == "string" then
-			preview_content = result
-		else
-			preview_content = "Preview generation failed:\n" .. tostring(result)
-		end
-
 		-- Generate preview content
+		local markdown_converter = require("code-companion-picker.utils.markdown_converter")
+		local preview_content = markdown_converter.codecompanion_to_markdown(prompt_info.prompt_data, prompt_info.name, {})
+
 		table.insert(items, {
 			text = display_text,
 			-- Store the original data in the item for use in preview and confirm

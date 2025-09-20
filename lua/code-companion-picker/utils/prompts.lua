@@ -30,7 +30,7 @@ function M.get_codecompanion_prompts_info()
         tools = markdown_converter.extract_tools_from_prompt(prompt_data),
       },
       content = M.convert_prompts_to_content(prompt_data.prompts or {}),
-      raw_content = markdown_converter.codecompanion_to_markdown(prompt_data, name),
+      raw_content = markdown_converter.codecompanion_to_markdown(prompt_data, name, {}),
       filepath = nil, -- No file path for codecompanion prompts
       prompt_data = prompt_data, -- Store original data for later use
       source = "codecompanion",

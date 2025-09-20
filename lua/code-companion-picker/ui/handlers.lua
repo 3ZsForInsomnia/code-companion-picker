@@ -24,10 +24,7 @@ function M.handle_prompt_selection(prompt_info)
   
   -- Apply model if specified
   if prompt_info.frontmatter and prompt_info.frontmatter.model then
-    local ok, err = pcall(models.apply_model_to_chat, prompt_info.frontmatter.model, chat_instance)
-    if not ok then
-      vim.notify("code-companion-picker: Error setting model: " .. tostring(err), vim.log.levels.WARN)
-    end
+    models.apply_model_to_chat(prompt_info.frontmatter.model, chat_instance)
   end
   
   -- Handle the prompt based on its structure
@@ -37,10 +34,7 @@ function M.handle_prompt_selection(prompt_info)
     -- Fallback to user content
     if prompt_info.content and prompt_info.content ~= "" then
       local content = chat_module.append_tool_instruction_if_needed(prompt_info.content)
-      local ok, err = pcall(chat_module.add_user_message, content)
-      if not ok then
-        vim.notify("code-companion-picker: Error adding message: " .. tostring(err), vim.log.levels.ERROR)
-      end
+      chat_module.add_user_message(content)
     end
   end
 end
@@ -78,19 +72,13 @@ function M.handle_codecompanion_prompt(prompt_info, chat_instance)
   
   -- Handle system prompt first if present
   if has_system and system_content ~= "" then
-    local ok, err = pcall(chat_module.add_system_message, system_content)
-    if not ok then
-      vim.notify("code-companion-picker: Error adding system message: " .. tostring(err), vim.log.levels.WARN)
-    end
+    chat_module.add_system_message(system_content)
   end
   
   -- Handle user content
   if user_content ~= "" then
     local content = chat_module.append_tool_instruction_if_needed(user_content)
-    local ok, err = pcall(chat_module.add_user_message, content)
-    if not ok then
-      vim.notify("code-companion-picker: Error adding user message: " .. tostring(err), vim.log.levels.ERROR)
-    end
+    chat_module.add_user_message(content)
   end
 end
 

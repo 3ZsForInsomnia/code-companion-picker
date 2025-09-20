@@ -66,7 +66,7 @@ function M.create_enhanced_previewer()
       local prompt_info = entry.value
       
       -- Convert codecompanion prompt to markdown
-      local content = markdown_converter.codecompanion_to_markdown(prompt_info.prompt_data, prompt_info.name)
+      local content = markdown_converter.codecompanion_to_markdown(prompt_info.prompt_data, prompt_info.name, {})
       local lines = vim.split(content, "\n")
       
       -- Set buffer content and filetype
