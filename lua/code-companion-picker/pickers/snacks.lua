@@ -96,6 +96,107 @@ function M.create_format_function()
 		-- Add description with a different color
 		if description then
 			table.insert(highlights, { description, "String" }) -- Use String highlight for descriptions
+		end
+
+		return highlights
+	end
+end
+
+function M.show_tool_picker(tools_info, selection_handler)
+	local snacks = require("snacks")
+
+	if not snacks.picker then
+		vim.notify("code-companion-picker: snacks.picker not available", vim.log.levels.ERROR)
+		return false
+	end
+
+	local tools_util = require("code-companion-picker.utils.tools")
+
+	-- Check if we have tools
+	if #tools_info == 0 then
+		vim.notify("code-companion-picker: No tools available", vim.log.levels.WARN)
+		return false
+	end
+
+	-- Convert tools_info to items with proper text field for Snacks picker
+	local items = {}
+	for i, tool_info in ipairs(tools_info) do
+		local display_text = tools_util.create_display_text(tool_info)
+
+		-- Generate preview content
+		local preview_content = tools_util.tool_to_markdown(tool_info)
+
+		table.insert(items, {
+			text = display_text,
+			-- Store the original data in the item for use in preview and confirm
+			tool_info = tool_info,
+			idx = i,
+			preview = {
+				text = preview_content,
+				ft = "markdown"
+			}
+		})
+	end
+
+	-- Debug: Check items were created
+	if #items == 0 then
+		vim.notify("code-companion-picker: No items created from tools", vim.log.levels.WARN)
+		return false
+	end
+
+	-- Show picker with custom preview
+	local ok, err = pcall(snacks.picker.pick, {
+		items = items,
+		title = "CodeCompanion Tools",
+		format = M.create_tool_format_function(),
+		preview = "preview", -- Use built-in preview with item.preview.text
+		confirm = function(picker, item)
+			picker:close()
+			if item and item.tool_info then
+				selection_handler(item.tool_info)
+			end
+		end,
+	})
+
+	if not ok then
+		vim.notify("code-companion-picker: Failed to show Snacks picker: " .. tostring(err), vim.log.levels.ERROR)
+		return false
+	end
+
+	return true
+end
+
+function M.create_tool_format_function()
+	return function(item)
+		if not item.tool_info then
+			return { { item.text or "Unknown", "Normal" } }
+		end
+
+		local tool_info = item.tool_info
+		local name = tool_info.name or "Unknown"
+		local description = tool_info.description
+		local display_name = tool_info.display_name or name
+
+		local highlights = {}
+
+		-- Parse the display name to highlight group and tool name separately
+		local group_part, tool_part = display_name:match("^%[(.-)%] (.+)$")
+		
+		if group_part and tool_part then
+			-- Format: [Group] Tool Name
+			table.insert(highlights, { "[", "Comment" })
+			table.insert(highlights, { group_part, "Identifier" }) -- Use Identifier for group names
+			table.insert(highlights, { "] ", "Comment" })
+			table.insert(highlights, { tool_part, "Function" }) -- Use Function for tool names
+		else
+			-- Format: Tool Name (no group)
+			table.insert(highlights, { display_name, "Function" })
+		end
+
+		-- Add description with a different color
+		if description and description ~= "" and description ~= "No description available" then
+			table.insert(highlights, { " - ", "Comment" })
+			table.insert(highlights, { description, "String" }) -- Use String highlight for descriptions
 		else
 			table.insert(highlights, { "No description", "Comment" })
 		end
@@ -103,6 +204,5 @@ function M.create_format_function()
 		return highlights
 	end
 end
-
 
 return M

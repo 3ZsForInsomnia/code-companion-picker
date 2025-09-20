@@ -39,7 +39,6 @@ function M.add_user_message(content)
   return true
 end
 
--- Add system message - we'll need this for handling system prompts
 function M.add_system_message(content)
   if not content or content == "" then
     v.notify("code-companion-picker: Cannot add empty system message to chat", v.log.levels.WARN)
@@ -67,6 +66,60 @@ function M.add_system_message(content)
     v.notify("code-companion-picker: Cannot set system prompt - CodeCompanion API may have changed", v.log.levels.WARN)
     return false
   end
+end
+
+-- Insert text at the current cursor position in the chat buffer
+function M.insert_at_cursor(text)
+  if not text or text == "" then
+    v.notify("code-companion-picker: Cannot insert empty text", v.log.levels.WARN)
+    return false
+  end
+
+  local chat = chat_utils.get_current_chat()
+  if not chat then
+    v.notify("code-companion-picker: No active chat found", v.log.levels.ERROR)
+    return false
+  end
+
+  -- Get the chat buffer
+  local chat_bufnr = chat.bufnr
+  if not chat_bufnr or not v.api.nvim_buf_is_valid(chat_bufnr) then
+    v.notify("code-companion-picker: Invalid chat buffer", v.log.levels.ERROR)
+    return false
+  end
+
+  -- Find the chat window
+  local chat_winid = nil
+  for _, winid in ipairs(v.api.nvim_list_wins()) do
+    if v.api.nvim_win_get_buf(winid) == chat_bufnr then
+      chat_winid = winid
+      break
+    end
+  end
+
+  if not chat_winid then
+    v.notify("code-companion-picker: Chat window not found", v.log.levels.ERROR)
+    return false
+  end
+
+  -- Focus the chat window and insert the text at cursor
+  v.api.nvim_set_current_win(chat_winid)
+  
+  -- Insert the text at the current cursor position
+  local cursor = v.api.nvim_win_get_cursor(chat_winid)
+  local row, col = cursor[1], cursor[2]
+  
+  -- Get the current line
+  local line = v.api.nvim_buf_get_lines(chat_bufnr, row - 1, row, false)[1] or ""
+  
+  -- Insert the text at the cursor position
+  local new_line = line:sub(1, col) .. text .. line:sub(col + 1)
+  v.api.nvim_buf_set_lines(chat_bufnr, row - 1, row, false, { new_line })
+  
+  -- Move cursor to after the inserted text
+  v.api.nvim_win_set_cursor(chat_winid, { row, col + #text })
+  
+  return true
 end
 
 return M
