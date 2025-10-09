@@ -37,7 +37,7 @@ Stop memorizing prompt names or hunting through files. This plugin gives you a b
 
 ```lua
 {
-  '3ZsForInsomnia/code-companion-picker.nvim',
+  '3ZsForInsomnia/code-companion-picker',
   dependencies = { 'folke/snacks.nvim' },
   opts = {
     picker = "snacks",
