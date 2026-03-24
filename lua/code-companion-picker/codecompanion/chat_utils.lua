@@ -3,23 +3,20 @@ local v = vim
 local M = {}
 
 function M.get_current_chat()
-  if v.bo.filetype ~= "codecompanion" then
+  local has_cc, cc = pcall(require, "codecompanion")
+  if not has_cc then
     return nil
   end
 
-  local chat_strategy = require("codecompanion.strategies.chat")
-  if not chat_strategy then
-    return nil
+  if v.bo.filetype == "codecompanion" then
+    local bufnr = v.api.nvim_get_current_buf()
+    local chat = cc.buf_get_chat(bufnr)
+    if chat then
+      return chat
+    end
   end
 
-  local bufnr = v.api.nvim_get_current_buf()
-  local chat = chat_strategy.buf_get_chat(bufnr)
-
-  if not chat then
-    chat = chat_strategy.last_chat()
-  end
-
-  return chat
+  return cc.last_chat()
 end
 
 function M.ensure_chat_open()

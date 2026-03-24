@@ -112,12 +112,19 @@ function M.insert_at_cursor(text)
   -- Get the current line
   local line = v.api.nvim_buf_get_lines(chat_bufnr, row - 1, row, false)[1] or ""
   
-  -- Insert the text at the cursor position
-  local new_line = line:sub(1, col) .. text .. line:sub(col + 1)
-  v.api.nvim_buf_set_lines(chat_bufnr, row - 1, row, false, { new_line })
-  
-  -- Move cursor to after the inserted text
-  v.api.nvim_win_set_cursor(chat_winid, { row, col + #text })
+  -- Insert the text at the cursor position, handling multi-line content
+  local before = line:sub(1, col)
+  local after = line:sub(col + 1)
+  local text_lines = v.split(text, "\n", { plain = true })
+
+  text_lines[1] = before .. text_lines[1]
+  text_lines[#text_lines] = text_lines[#text_lines] .. after
+
+  v.api.nvim_buf_set_lines(chat_bufnr, row - 1, row, false, text_lines)
+
+  local last_line_row = row - 1 + #text_lines
+  local last_line_col = #text_lines[#text_lines] - #after
+  v.api.nvim_win_set_cursor(chat_winid, { last_line_row, last_line_col })
   
   return true
 end

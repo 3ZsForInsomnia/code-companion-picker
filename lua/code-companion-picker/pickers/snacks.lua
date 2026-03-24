@@ -1,208 +1,177 @@
+local snacks_utils = require("code-companion-picker.pickers.snacks_utils")
+
 local M = {}
 
-function M.show_picker(prompts_info, selection_handler)
-	local snacks = require("snacks")
-
-	if not snacks.picker then
-		vim.notify("code-companion-picker: snacks.picker not available", vim.log.levels.ERROR)
-		return false
-	end
-
+local function build_prompt_items(prompts_info)
 	local prompts_util = require("code-companion-picker.utils.prompts")
+	local markdown_converter = require("code-companion-picker.utils.markdown_converter")
 
-	-- Check if we have prompts
-	if #prompts_info == 0 then
-		vim.notify("code-companion-picker: No prompts available", vim.log.levels.WARN)
-		return false
-	end
-
-	-- Convert prompts_info to items with proper text field for Snacks picker
 	local items = {}
 	for i, prompt_info in ipairs(prompts_info) do
-		local display_text = prompts_util.create_display_text(prompt_info)
-
-		-- Generate preview content
-		local markdown_converter = require("code-companion-picker.utils.markdown_converter")
-		local preview_content = markdown_converter.codecompanion_to_markdown(prompt_info.prompt_data, prompt_info.name, {})
-
 		table.insert(items, {
-			text = display_text,
-			-- Store the original data in the item for use in preview and confirm
+			text = prompts_util.create_display_text(prompt_info),
 			prompt_info = prompt_info,
 			idx = i,
 			preview = {
-				text = preview_content,
-				ft = "markdown"
-			}
+				text = markdown_converter.codecompanion_to_markdown(prompt_info.prompt_data, prompt_info.name, {}),
+				ft = "markdown",
+			},
 		})
 	end
+	return items
+end
 
-	-- Debug: Check items were created
-	if #items == 0 then
-		vim.notify("code-companion-picker: No items created from prompts", vim.log.levels.WARN)
-		return false
+local function format_prompt(item)
+	if not item.prompt_info then
+		return { { item.text or "Unknown", "Normal" } }
 	end
 
-	-- Show picker with custom preview
-	local ok, err = pcall(snacks.picker.pick, {
-		items = items,
+	local prompt_info = item.prompt_info
+	local name = prompt_info.name or "Unknown"
+
+	if name:match("^vsc_") then
+		local prompts_util = require("code-companion-picker.utils.prompts")
+		name = prompts_util.englishify_filename(name:gsub("^vsc_", ""))
+	end
+
+	local description = prompt_info.frontmatter and prompt_info.frontmatter.description
+	return snacks_utils.format_bracketed_entry(name, description)
+end
+
+function M.show_picker(prompts_info, selection_handler)
+	return snacks_utils.show_picker({
+		items = build_prompt_items(prompts_info),
 		title = "CodeCompanion Prompts",
-		format = M.create_format_function(),
-		preview = "preview", -- Use built-in preview with item.preview.text
-		confirm = function(picker, item)
-			picker:close()
-			if item and item.prompt_info then
+		format = function(item) return format_prompt(item) end,
+		preview = "preview",
+		confirm_handler = function(item)
+			if item.prompt_info then
 				selection_handler(item.prompt_info)
 			end
 		end,
 	})
-
-	if not ok then
-		vim.notify("code-companion-picker: Error showing picker: " .. tostring(err), vim.log.levels.ERROR)
-		return false
-	end
-
-	return true
 end
 
--- Create a custom format function for colored display
-function M.create_format_function()
-	return function(item)
-		if not item.prompt_info then
-			return { { item.text or "Unknown", "Normal" } }
-		end
-
-		local prompt_info = item.prompt_info
-		local name = prompt_info.name or "Unknown"
-		local description = prompt_info.frontmatter and prompt_info.frontmatter.description
-
-		-- Check if it's an imported vs-code prompt
-		local display_name
-		if name:match("^vsc_") then
-			local clean_name = name:gsub("^vsc_", "")
-			local prompts_util = require("code-companion-picker.utils.prompts")
-			display_name = prompts_util.englishify_filename(clean_name)
-		else
-			display_name = name
-		end
-
-		local highlights = {}
-
-		-- Add the prompt name in brackets with a distinct color
-		table.insert(highlights, { "[", "Comment" })
-		table.insert(highlights, { display_name, "Function" }) -- Use Function highlight for prompt names
-		table.insert(highlights, { "]: ", "Comment" })
-
-		-- Add description with a different color
-		if description then
-			table.insert(highlights, { description, "String" }) -- Use String highlight for descriptions
-		end
-
-		return highlights
-	end
-end
-
-function M.show_tool_picker(tools_info, selection_handler)
-	local snacks = require("snacks")
-
-	if not snacks.picker then
-		vim.notify("code-companion-picker: snacks.picker not available", vim.log.levels.ERROR)
-		return false
-	end
-
+local function build_tool_items(tools_info)
 	local tools_util = require("code-companion-picker.utils.tools")
 
-	-- Check if we have tools
-	if #tools_info == 0 then
-		vim.notify("code-companion-picker: No tools available", vim.log.levels.WARN)
-		return false
-	end
-
-	-- Convert tools_info to items with proper text field for Snacks picker
 	local items = {}
 	for i, tool_info in ipairs(tools_info) do
-		local display_text = tools_util.create_display_text(tool_info)
-
-		-- Generate preview content
-		local preview_content = tools_util.tool_to_markdown(tool_info)
-
 		table.insert(items, {
-			text = display_text,
-			-- Store the original data in the item for use in preview and confirm
+			text = tools_util.create_display_text(tool_info),
 			tool_info = tool_info,
 			idx = i,
 			preview = {
-				text = preview_content,
-				ft = "markdown"
-			}
+				text = tools_util.tool_to_markdown(tool_info),
+				ft = "markdown",
+			},
 		})
 	end
+	return items
+end
 
-	-- Debug: Check items were created
-	if #items == 0 then
-		vim.notify("code-companion-picker: No items created from tools", vim.log.levels.WARN)
-		return false
+local function format_tool(item)
+	if not item.tool_info then
+		return { { item.text or "Unknown", "Normal" } }
 	end
 
-	-- Show picker with custom preview
-	local ok, err = pcall(snacks.picker.pick, {
-		items = items,
+	local tool_info = item.tool_info
+	local display_name = tool_info.display_name or tool_info.name or "Unknown"
+	local description = tool_info.description
+
+	local group_part, tool_part = display_name:match("^%[(.-)%] (.+)$")
+
+	if group_part and tool_part then
+		local middle = {
+			{ text = " (", hl = "Comment" },
+			{ text = group_part, hl = "Identifier" },
+			{ text = ")", hl = "Comment" },
+		}
+		local has_description = description and description ~= "" and description ~= "No description available"
+		return snacks_utils.format_bracketed_entry(tool_part, has_description and description or nil, middle)
+	end
+
+	local has_description = description and description ~= "" and description ~= "No description available"
+	return snacks_utils.format_bracketed_entry(display_name, has_description and description or nil)
+end
+
+function M.show_tool_picker(tools_info, selection_handler)
+	return snacks_utils.show_picker({
+		items = build_tool_items(tools_info),
 		title = "CodeCompanion Tools",
-		format = M.create_tool_format_function(),
-		preview = "preview", -- Use built-in preview with item.preview.text
-		confirm = function(picker, item)
-			picker:close()
-			if item and item.tool_info then
+		format = function(item) return format_tool(item) end,
+		preview = "preview",
+		confirm_handler = function(item)
+			if item.tool_info then
 				selection_handler(item.tool_info)
 			end
 		end,
 	})
-
-	if not ok then
-		vim.notify("code-companion-picker: Failed to show Snacks picker: " .. tostring(err), vim.log.levels.ERROR)
-		return false
-	end
-
-	return true
 end
 
-function M.create_tool_format_function()
-	return function(item)
-		if not item.tool_info then
-			return { { item.text or "Unknown", "Normal" } }
-		end
+local function build_skill_items(skills_info)
+	local skills_util = require("code-companion-picker.utils.skills")
 
-		local tool_info = item.tool_info
-		local name = tool_info.name or "Unknown"
-		local description = tool_info.description
-		local display_name = tool_info.display_name or name
-
-		local highlights = {}
-
-		-- Parse the display name to highlight group and tool name separately
-		local group_part, tool_part = display_name:match("^%[(.-)%] (.+)$")
-		
-		if group_part and tool_part then
-			-- Format: [Group] Tool Name
-			table.insert(highlights, { "[", "Comment" })
-			table.insert(highlights, { group_part, "Identifier" }) -- Use Identifier for group names
-			table.insert(highlights, { "] ", "Comment" })
-			table.insert(highlights, { tool_part, "Function" }) -- Use Function for tool names
-		else
-			-- Format: Tool Name (no group)
-			table.insert(highlights, { display_name, "Function" })
-		end
-
-		-- Add description with a different color
-		if description and description ~= "" and description ~= "No description available" then
-			table.insert(highlights, { " - ", "Comment" })
-			table.insert(highlights, { description, "String" }) -- Use String highlight for descriptions
-		else
-			table.insert(highlights, { "No description", "Comment" })
-		end
-
-		return highlights
+	local items = {}
+	for i, skill in ipairs(skills_info) do
+		table.insert(items, {
+			text = skills_util.create_display_text(skill),
+			skill = skill,
+			idx = i,
+		})
 	end
+	return items
+end
+
+local function format_skill(item)
+	if not item.skill then
+		return { { item.text or "Unknown", "Normal" } }
+	end
+
+	local skill = item.skill
+	local middle = skill.location and {
+		{ text = " (", hl = "Comment" },
+		{ text = skill.location, hl = "Identifier" },
+		{ text = ")", hl = "Comment" },
+	} or nil
+
+	return snacks_utils.format_bracketed_entry(skill.name, skill.description, middle)
+end
+
+local function create_skill_preview()
+	local skills_util = require("code-companion-picker.utils.skills")
+	local cache = {}
+
+	return function(ctx)
+		local item = ctx.item
+		if not item or not item.skill then
+			return
+		end
+
+		local name = item.skill.name
+		if not cache[name] then
+			cache[name] = skills_util.read(name) or "*Could not load skill content*"
+		end
+
+		vim.bo[ctx.buf].modifiable = true
+		vim.api.nvim_buf_set_lines(ctx.buf, 0, -1, false, vim.split(cache[name], "\n"))
+		vim.bo[ctx.buf].modifiable = false
+		vim.bo[ctx.buf].filetype = "markdown"
+	end
+end
+
+function M.show_skill_picker(skills_info, selection_handler)
+	return snacks_utils.show_picker({
+		items = build_skill_items(skills_info),
+		title = "CodeCompanion Skills",
+		format = function(item) return format_skill(item) end,
+		preview = create_skill_preview(),
+		confirm_handler = function(item)
+			if item.skill then
+				selection_handler(item.skill)
+			end
+		end,
+	})
 end
 
 return M

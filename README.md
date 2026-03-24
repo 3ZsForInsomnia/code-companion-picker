@@ -1,6 +1,6 @@
 # 🚀 code-companion-picker.nvim
 
-**Finally, a way to actually *browse* your [CodeCompanion](https://codecompanion.olimorris.dev/) prompts!** 
+**Finally, a way to actually *browse* your [CodeCompanion](https://codecompanion.olimorris.dev/) prompts!**
 
 Stop memorizing prompt names or hunting through files. This plugin gives you a beautiful, fast picker with rich markdown previews that shows you exactly what each prompt does before you use it. Think Telescope for files, but for your AI prompts.
 
@@ -31,7 +31,7 @@ Stop memorizing prompt names or hunting through files. This plugin gives you a b
 - [codecompanion.nvim](https://github.com/olimorris/codecompanion.nvim) - Required
 - One picker backend:
   - [snacks.nvim](https://github.com/folke/snacks.nvim) - Modern, fast ⭐ **Recommended**
-  - [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) - Classic, proven
+  - [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) - ⚠️ **Deprecated**, will be removed in a future release
 
 ### With Snacks (Recommended)
 
@@ -48,7 +48,9 @@ Stop memorizing prompt names or hunting through files. This plugin gives you a b
 }
 ```
 
-### With Telescope
+### With Telescope (⚠️ Deprecated)
+
+> **Note:** Telescope support is deprecated and will be removed in a future release. Please use Snacks instead.
 
 ```lua
 {
@@ -194,3 +196,9 @@ The `handle_prompt_selection` function handles all the complexity of applying pr
 ---
 
 **Happy prompting!** 🚀
+
+## TODO
+
+- [ ] Extract `get_or_open_chat` pattern from `skill_handlers.lua` into `chat_utils` and reuse in `handlers.lua` and `tool_handlers.lua`
+- [ ] Remove redundant snacks availability checks — `ui/pickers.lua` guards duplicate what `snacks_utils.lua` already checks
+- [ ] Remove telescope support entirely

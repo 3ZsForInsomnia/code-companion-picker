@@ -1,11 +1,24 @@
 local M = {}
 
+local telescope_warned = false
+local function warn_telescope_deprecated()
+  if telescope_warned then
+    return
+  end
+  telescope_warned = true
+  vim.notify(
+    "code-companion-picker: Telescope support is deprecated and will be removed in a future release. Please switch to snacks.nvim.",
+    vim.log.levels.WARN
+  )
+end
+
 function M.show_picker(prompts_info, selection_handler)
   local config = require("code-companion-picker.config").get()
   
   if config.picker == "snacks" then
     return M.use_snacks_picker(prompts_info, selection_handler)
   elseif config.picker == "telescope" then
+    warn_telescope_deprecated()
     return M.use_telescope_picker(prompts_info, selection_handler)
   else
     vim.notify("code-companion-picker: Unknown picker: " .. config.picker, vim.log.levels.ERROR)
@@ -19,6 +32,7 @@ end
    if config.picker == "snacks" then
      return M.use_snacks_tool_picker(tools_info, selection_handler)
    elseif config.picker == "telescope" then
+     warn_telescope_deprecated()
      return M.use_telescope_tool_picker(tools_info, selection_handler)
    else
      vim.notify("code-companion-picker: Unknown picker: " .. config.picker, vim.log.levels.ERROR)
@@ -79,6 +93,36 @@ function M.use_telescope_tool_picker(tools_info, selection_handler)
   
   local telescope_picker = require("code-companion-picker.pickers.telescope")
   return telescope_picker.show_tool_picker(tools_info, selection_handler)
+end
+
+function M.show_skill_picker(skills_info, selection_handler)
+  local config = require("code-companion-picker.config").get()
+
+  if config.picker == "snacks" then
+    return M.use_snacks_skill_picker(skills_info, selection_handler)
+  elseif config.picker == "telescope" then
+    vim.notify("code-companion-picker: Skills picker is not supported in telescope (deprecated)", vim.log.levels.WARN)
+    return false
+  else
+    vim.notify("code-companion-picker: Unknown picker: " .. config.picker, vim.log.levels.ERROR)
+    return false
+  end
+end
+
+function M.use_snacks_skill_picker(skills_info, selection_handler)
+  local has_snacks, snacks = pcall(require, "snacks")
+  if not has_snacks then
+    vim.notify("code-companion-picker: snacks.nvim not found", vim.log.levels.ERROR)
+    return false
+  end
+
+  if not snacks.picker then
+    vim.notify("code-companion-picker: snacks.picker not available", vim.log.levels.ERROR)
+    return false
+  end
+
+  local snacks_picker = require("code-companion-picker.pickers.snacks")
+  return snacks_picker.show_skill_picker(skills_info, selection_handler)
 end
 
 return M

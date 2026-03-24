@@ -12,3 +12,9 @@ vim.api.nvim_create_user_command("CodeCompanionPrompts", function()
 end, {
   desc = "Show CodeCompanion prompts with preview",
 })
+
+vim.api.nvim_create_user_command("CodeCompanionSkills", function()
+  require("code-companion-picker").show_skills()
+end, {
+  desc = "Browse and insert OpenSkills into chat",
+})

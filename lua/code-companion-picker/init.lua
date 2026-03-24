@@ -170,4 +170,26 @@ M.select_tool_slash_command = {
 	end,
 }
 
+function M.show_skills()
+	local pickers = require("code-companion-picker.ui.pickers")
+	local handlers = require("code-companion-picker.ui.skill_handlers")
+	local skills_util = require("code-companion-picker.utils.skills")
+
+	local skills_info = skills_util.list()
+
+	if #skills_info == 0 then
+		vim.notify("code-companion-picker: No skills available", vim.log.levels.WARN)
+		return
+	end
+
+	pickers.show_skill_picker(skills_info, handlers.handle_skill_selection)
+end
+
+M.select_skill_slash_command = {
+	description = "Select a skill to insert into chat",
+	callback = function()
+		M.show_skills()
+	end,
+}
+
 return M

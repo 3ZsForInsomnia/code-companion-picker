@@ -1,3 +1,6 @@
+-- DEPRECATED: Telescope support is no longer maintained.
+-- Please switch to snacks.nvim. This file will be removed in a future release.
+
 local M = {}
 
 function M.show_picker(prompts_info, selection_handler)
