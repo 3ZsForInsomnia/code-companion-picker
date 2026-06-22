@@ -16,5 +16,5 @@ end, {
 vim.api.nvim_create_user_command("CodeCompanionSkills", function()
   require("code-companion-picker").show_skills()
 end, {
-  desc = "Browse and insert OpenSkills into chat",
+  desc = "Browse and insert agent skills into chat",
 })

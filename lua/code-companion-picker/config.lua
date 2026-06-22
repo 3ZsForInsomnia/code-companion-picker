@@ -20,10 +20,28 @@ local function validate_config(user_config)
 			error("code-companion-picker: config.renderers must be a table")
 		end
 	end
+
+	if user_config.skills then
+		if type(user_config.skills) ~= "table" then
+			error("code-companion-picker: config.skills must be a table")
+		end
+		if user_config.skills.backend then
+			local valid_backends = { "skillport", "openskills" }
+			if not vim.tbl_contains(valid_backends, user_config.skills.backend) then
+				error(
+					"code-companion-picker: config.skills.backend must be one of: "
+						.. table.concat(valid_backends, ", ")
+				)
+			end
+		end
+	end
 end
 
 local default_config = {
 	picker = "snacks", -- "snacks" or "telescope"
+	skills = {
+		backend = "skillport", -- "skillport" or "openskills"
+	},
 	highlights = {
 		yaml_key = { fg = "#79dac8", bold = true }, -- cyan for yaml keys
 		yaml_value = { fg = "#e39777" }, -- orange for yaml values
