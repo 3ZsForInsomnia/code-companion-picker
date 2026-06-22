@@ -164,8 +164,11 @@ function M.get_current_system_prompt(max_length)
 		return nil
 	end
 	
-	local system_prompt = codecompanion_config.config.strategies.chat.opts.system_prompt
-	if not system_prompt or system_prompt == "" then
+	local system_prompt = codecompanion_config.config.interactions.chat.opts.system_prompt
+	if not system_prompt or type(system_prompt) == "function" then
+		return nil
+	end
+	if system_prompt == "" then
 		return nil
 	end
 	
@@ -183,7 +186,11 @@ function M.get_full_current_system_prompt()
 		return nil
 	end
 	
-	return codecompanion_config.config.strategies.chat.opts.system_prompt
+	local system_prompt = codecompanion_config.config.interactions.chat.opts.system_prompt
+	if type(system_prompt) == "function" then
+		return nil
+	end
+	return system_prompt
 end
 
 --- Extract section data from prompt
