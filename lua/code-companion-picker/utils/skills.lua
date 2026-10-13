@@ -1,9 +1,11 @@
 local openskills = require("code-companion-picker.utils.skills_backends.openskills")
 local skillport = require("code-companion-picker.utils.skills_backends.skillport")
+local skillz = require("code-companion-picker.utils.skills_backends.skillz")
 
 local backends = {
 	openskills = openskills,
 	skillport = skillport,
+	skillz = skillz,
 }
 
 local M = {}
