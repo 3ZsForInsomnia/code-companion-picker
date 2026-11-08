@@ -56,6 +56,9 @@ function M.show_picker(opts)
 		title = opts.title,
 		format = opts.format,
 		preview = opts.preview,
+		-- Return focus to the window the picker was opened from. By default snacks
+		-- skips non-file buffers like the CodeCompanion chat when restoring focus.
+		main = { current = true },
 		confirm = function(picker, item)
 			picker:close()
 			if item then
