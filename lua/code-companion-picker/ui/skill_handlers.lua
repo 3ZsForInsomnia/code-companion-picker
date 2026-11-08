@@ -24,18 +24,29 @@ local function get_or_open_chat(callback)
 	end, 200)
 end
 
+local function chat_has_context(chat, id)
+	return vim.iter(chat.messages):any(function(msg)
+		return msg.context ~= nil and msg.context.id == id
+	end)
+end
+
 function M.handle_skill_selection(skill)
 	get_or_open_chat(function(chat)
-		local skills_util = require("code-companion-picker.utils.skills")
-		local content = skills_util.read(skill.name)
+		local id = "<skill>" .. skill.name .. "</skill>"
+		if chat_has_context(chat, id) then
+			vim.notify("code-companion-picker: Skill already in chat: " .. skill.name, vim.log.levels.INFO)
+			return
+		end
 
-		if not content or content == "" then
+		local skills_util = require("code-companion-picker.utils.skills")
+		local content = skills_util.read_framed(skill.name)
+
+		if not content then
 			vim.notify("code-companion-picker: Failed to read skill: " .. skill.name, vim.log.levels.ERROR)
 			return
 		end
 
-		local id = "<skill>" .. skill.name .. "</skill>"
-		chat:add_context({ content = content }, "skill", id)
+		chat:add_context({ content = content }, { source = "skill", id = id })
 	end)
 end
 

@@ -47,7 +47,7 @@ function M.list()
 	return skills
 end
 
-local function strip_preamble(output)
+local function parse_read_output(output)
 	local lines = vim.split(output, "\n")
 	local i = 1
 	local base_dir = nil
@@ -77,12 +77,10 @@ local function strip_preamble(output)
 		i = i + 1
 	end
 
-	local body = table.concat(lines, "\n", i)
-
-	if base_dir then
-		return "Base directory: " .. base_dir .. "\n\n" .. body
-	end
-	return body
+	return {
+		body = table.concat(lines, "\n", i),
+		folder = base_dir,
+	}
 end
 
 function M.read(skill_name)
@@ -90,7 +88,7 @@ function M.read(skill_name)
 	if vim.v.shell_error ~= 0 then
 		return nil
 	end
-	return strip_preamble(output)
+	return parse_read_output(output)
 end
 
 return M

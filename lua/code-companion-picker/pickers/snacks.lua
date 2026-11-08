@@ -150,7 +150,8 @@ local function create_skill_preview()
 
 		local name = item.skill.name
 		if not cache[name] then
-			cache[name] = skills_util.read(name) or "*Could not load skill content*"
+			local skill = skills_util.read(name)
+			cache[name] = skill and skill.body or "*Could not load skill content*"
 		end
 
 		vim.bo[ctx.buf].modifiable = true

@@ -45,7 +45,11 @@ function M.read(skill_id)
 	if not data then
 		return nil
 	end
-	return data.instructions
+	return {
+		body = data.instructions,
+		-- `path` is the skill's directory; empty when SkillPort doesn't report one
+		folder = data.path ~= "" and data.path or nil,
+	}
 end
 
 return M

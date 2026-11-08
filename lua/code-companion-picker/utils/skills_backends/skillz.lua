@@ -68,8 +68,10 @@ function M.read(skill_name)
 		return nil
 	end
 
-	local body = strip_frontmatter(vim.fn.readfile(skill_file))
-	return "Base directory: " .. folder .. "\n\n" .. body
+	return {
+		body = strip_frontmatter(vim.fn.readfile(skill_file)),
+		folder = folder,
+	}
 end
 
 return M
